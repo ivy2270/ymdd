@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>50週年校友相簿</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+  :root {
+    --ink: #2b2420;
+    --paper: #f7f3ec;
+    --accent: #b5562e;
+    --line: #ddd3c4;
+    --muted: #8a7e6f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  header {
+    padding: 28px 20px 18px;
+    text-align: center;
+    border-bottom: 1px solid var(--line);
+  }
+  header h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    letter-spacing: 0.05em;
+  }
+  header p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .tabs button {
+    padding: 8px 16px;
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--ink);
+  }
+  .tabs button.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .panel {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  select, input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 1rem;
+    margin-bottom: 12px;
+    background: #fff;
+  }
+  label { font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 4px; }
+  .field { margin-bottom: 14px; }
+  .upload-box {
+    border: 2px dashed var(--line);
+    border-radius: 10px;
+    padding: 24px;
+    text-align: center;
+    margin-bottom: 14px;
+    cursor: pointer;
+    transition: border-color .2s;
+  }
+  .upload-box.dragover { border-color: var(--accent); }
+  .upload-box input { display: none; }
+  .preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .preview-grid img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 6px;
+  }
+  .stat-line {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 14px;
+    text-align: right;
+  }
+  button.primary {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .msg { margin-top: 10px; font-size: 0.9rem; text-align: center; }
+  .msg.success { color: #2e7d32; }
+  .msg.error { color: var(--accent); }
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+  }
+  .gallery .item {
+    border-radius: 8px;
+    overflow: hidden;
+    aspect-ratio: 1;
+    background: #eee;
+    cursor: pointer;
+    position: relative;
+  }
+  .gallery .item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .2s;
+  }
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 40px 0;
+  }
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .lightbox img {
+    max-width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
+  }
+  .lightbox .close {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    color: #fff;
+    font-size: 2rem;
+    cursor: pointer;
+    background: none;
+    border: none;
+    z-index: 2;
+  }
+  .nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border: none;
+    font-size: 2rem;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    line-height: 1;
+  }
+  .nav-prev { left: 12px; }
+  .nav-next { right: 12px; }
+  .nav-btn:hover { background: rgba(255,255,255,0.3); }
+  .lightbox-counter {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-size: 0.85rem;
+    background: rgba(0,0,0,0.4);
+    padding: 4px 12px;
+    border-radius: 12px;
+  }
+  @media (max-width: 600px) {
+    .nav-btn { width: 40px; height: 40px; font-size: 1.6rem; }
+  }
+  .spinner {
+    text-align: center;
+    color: var(--muted);
+    padding: 30px 0;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>50週年校友相簿</h1>
+    <p>上傳並瀏覽各屆同學的活動照片</p>
+  </header>
+
+  <div class="container">
+    <div class="tabs">
+      <button :class="{active: mode==='browse'}" @click="mode='browse'">瀏覽相簿</button>
+      <button :class="{active: mode==='upload'}" @click="mode='upload'">上傳照片</button>
+    </div>
+
+    <!-- 瀏覽相簿 -->
+    <div class="panel" v-if="mode==='browse'">
+      <div class="field">
+        <label>選擇屆次</label>
+        <select v-model="browseYear" @change="loadAlbum">
+          <option value="">請選擇屆次</option>
+          <option v-for="f in folders" :key="f.year" :value="f.year">{{ f.year }}</option>
+        </select>
+      </div>
+
+      <div v-if="albumLoading" class="spinner">載入中...</div>
+      <div v-else-if="browseYear && photos.length===0" class="empty">這個屆次目前還沒有照片</div>
+      <div v-else-if="browseYear" class="gallery">
+        <div class="item" v-for="(p, idx) in photos" :key="p.id" @click="openLightbox(idx)">
+          <img :src="p.thumbnailUrl" :style="{transform: 'rotate(' + p.rotation + 'deg)'}" loading="lazy" :alt="p.fileName">
+        </div>
+      </div>
+      <div v-else class="empty">請先選擇屆次</div>
+    </div>
+
+    <!-- 上傳照片 -->
+    <div class="panel" v-if="mode==='upload'">
+      <div class="field">
+        <label>選擇屆次</label>
+        <select v-model="uploadYear">
+          <option value="">請選擇屆次</option>
+          <option v-for="f in folders" :key="f.year" :value="f.year">{{ f.year }}</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>上傳密碼</label>
+        <input type="password" v-model="uploadPassword" placeholder="請輸入上傳密碼">
+      </div>
+
+      <div class="field">
+        <label
+          class="upload-box"
+          :class="{dragover: isDragover}"
+          @dragover.prevent="isDragover=true"
+          @dragleave.prevent="isDragover=false"
+          @drop.prevent="onDrop"
+        >
+          點擊選擇照片，或拖曳照片到這裡<br>
+          <small>(單次最多 {{ maxFiles }} 張，會自動壓縮)</small>
+          <input type="file" accept="image/*" multiple @change="onFileSelect">
+        </label>
+      </div>
+
+      <div class="preview-grid" v-if="selectedFiles.length">
+        <img v-for="(f, idx) in selectedFiles" :key="idx" :src="f.previewUrl">
+      </div>
+      <div class="stat-line" v-if="selectedFiles.length">已選 {{ selectedFiles.length }} / {{ maxFiles }} 張</div>
+
+      <button class="primary" :disabled="!canUpload || uploading" @click="doUpload">
+        {{ uploading ? `上傳中... (${uploadProgress}/${selectedFiles.length})` : '開始上傳' }}
+      </button>
+
+      <div class="msg" :class="uploadMsgType" v-if="uploadMsg">{{ uploadMsg }}</div>
+    </div>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lightbox" v-if="lightboxIndex !== null"
+       @click="lightboxIndex=null"
+       @touchstart="onTouchStart"
+       @touchend="onTouchEnd">
+    <button class="close" @click.stop="lightboxIndex=null">&times;</button>
+    <button class="nav-btn nav-prev" v-if="photos.length>1" @click.stop="prevPhoto">&#8249;</button>
+    <img :src="photos[lightboxIndex].thumbnailUrl"
+         :style="{transform: 'rotate(' + photos[lightboxIndex].rotation + 'deg)'}"
+         @click.stop>
+    <button class="nav-btn nav-next" v-if="photos.length>1" @click.stop="nextPhoto">&#8250;</button>
+    <div class="lightbox-counter" v-if="photos.length>1">{{ lightboxIndex+1 }} / {{ photos.length }}</div>
+  </div>
+</div>
+
+<script>
+const { createApp } = Vue;
+
+// === GAS Web App URL ===
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxL6_tngyZGFYhRoZ_h5lJf18bl4vubYwXJkws35GTpAzgjXhrid70vj9Zn69AN5Vam/exec';
+
+createApp({
+  data() {
+    return {
+      mode: 'browse',
+      folders: [],
+      browseYear: '',
+      photos: [],
+      albumLoading: false,
+      lightboxIndex: null,
+      touchStartX: 0,
+
+      uploadYear: '',
+      uploadPassword: '',
+      maxFiles: 15,
+      selectedFiles: [], // { file: Blob(compressed), previewUrl }
+      isDragover: false,
+      uploading: false,
+      uploadProgress: 0,
+      uploadMsg: '',
+      uploadMsgType: ''
+    };
+  },
+  computed: {
+    canUpload() {
+      return this.uploadYear && this.uploadPassword && this.selectedFiles.length > 0;
+    }
+  },
+  mounted() {
+    this.loadFolders();
+    window.addEventListener('keydown', (e) => {
+      if (this.lightboxIndex === null) return;
+      if (e.key === 'ArrowLeft') this.prevPhoto();
+      else if (e.key === 'ArrowRight') this.nextPhoto();
+      else if (e.key === 'Escape') this.lightboxIndex = null;
+    });
+  },
+  methods: {
+    async loadFolders() {
+      try {
+        const res = await fetch(`${GAS_URL}?action=getFolders`);
+        const data = await res.json();
+        if (data.success) this.folders = data.folders;
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    async loadAlbum() {
+      if (!this.browseYear) { this.photos = []; return; }
+      this.albumLoading = true;
+      try {
+        const res = await fetch(`${GAS_URL}?action=getAlbum&year=${encodeURIComponent(this.browseYear)}`);
+        const data = await res.json();
+        this.photos = data.success ? data.photos : [];
+      } catch (err) {
+        this.photos = [];
+      } finally {
+        this.albumLoading = false;
+      }
+    },
+    openLightbox(index) {
+      this.lightboxIndex = index;
+    },
+    prevPhoto() {
+      if (this.lightboxIndex === null) return;
+      this.lightboxIndex = (this.lightboxIndex - 1 + this.photos.length) % this.photos.length;
+    },
+    nextPhoto() {
+      if (this.lightboxIndex === null) return;
+      this.lightboxIndex = (this.lightboxIndex + 1) % this.photos.length;
+    },
+    onTouchStart(e) {
+      this.touchStartX = e.changedTouches[0].clientX;
+    },
+    onTouchEnd(e) {
+      const dx = e.changedTouches[0].clientX - this.touchStartX;
+      const threshold = 50; // 最小滑動距離(px)
+      if (dx > threshold) this.prevPhoto();      // 向右滑 -> 上一張
+      else if (dx < -threshold) this.nextPhoto(); // 向左滑 -> 下一張
+    },
+    onFileSelect(e) {
+      this.handleFiles(e.target.files);
+    },
+    onDrop(e) {
+      this.isDragover = false;
+      this.handleFiles(e.dataTransfer.files);
+    },
+    async handleFiles(fileList) {
+      this.uploadMsg = '';
+      const maxFiles = this.maxFiles;
+      const incoming = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+
+      if (this.selectedFiles.length + incoming.length > maxFiles) {
+        const remaining = maxFiles - this.selectedFiles.length;
+        if (remaining <= 0) {
+          this.uploadMsg = `單次最多上傳 ${maxFiles} 張照片，請先上傳目前選取的照片，或移除部分照片後再加選`;
+        } else {
+          this.uploadMsg = `單次最多上傳 ${maxFiles} 張照片，已超過上限，請分批上傳（本次僅加入前 ${remaining} 張）`;
+        }
+        this.uploadMsgType = 'error';
+        incoming.splice(remaining < 0 ? 0 : remaining);
+      }
+
+      for (const file of incoming) {
+        const compressed = await this.compressImage(file);
+        const previewUrl = URL.createObjectURL(compressed.blob);
+        this.selectedFiles.push({
+          name: file.name,
+          blob: compressed.blob,
+          mimeType: compressed.mimeType,
+          previewUrl
+        });
+      }
+    },
+    // 壓縮圖片：最長邊限制2000px，輸出JPEG品質0.85
+    compressImage(file) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          img.onload = () => {
+            const maxDim = 2000;
+            let { width, height } = img;
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round(height * (maxDim / width));
+                width = maxDim;
+              } else {
+                width = Math.round(width * (maxDim / height));
+                height = maxDim;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob((blob) => {
+              resolve({ blob, mimeType: 'image/jpeg' });
+            }, 'image/jpeg', 0.85);
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    },
+    blobToBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    },
+    async doUpload() {
+      this.uploading = true;
+      this.uploadProgress = 0;
+      this.uploadMsg = '';
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const f of this.selectedFiles) {
+        try {
+          const base64Data = await this.blobToBase64(f.blob);
+          const res = await fetch(GAS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 避免CORS preflight
+            body: JSON.stringify({
+              action: 'upload',
+              password: this.uploadPassword,
+              year: this.uploadYear,
+              fileName: f.name,
+              mimeType: f.mimeType,
+              base64Data
+            })
+          });
+          const data = await res.json();
+          if (data.success) successCount++;
+          else failCount++;
+          if (!data.success && data.error === '密碼錯誤') {
+            this.uploadMsg = '密碼錯誤，請確認後再試';
+            this.uploadMsgType = 'error';
+            this.uploading = false;
+            return;
+          }
+        } catch (err) {
+          failCount++;
+        }
+        this.uploadProgress++;
+      }
+
+      this.uploading = false;
+      if (failCount === 0) {
+        this.uploadMsg = `成功上傳 ${successCount} 張照片！`;
+        this.uploadMsgType = 'success';
+        this.selectedFiles = [];
+
+        // 自動切換到瀏覽相簿，顯示剛上傳的屆次
+        const uploadedYear = this.uploadYear;
+        this.browseYear = uploadedYear;
+        this.mode = 'browse';
+        await this.loadAlbum();
+
+        // 清空upload面板的訊息，避免殘留
+        this.uploadMsg = '';
+        this.uploadMsgType = '';
+      } else {
+        this.uploadMsg = `完成：成功 ${successCount} 張，失敗 ${failCount} 張`;
+        this.uploadMsgType = 'error';
+      }
+    }
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

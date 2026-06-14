@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>校友相簿 - 管理後台</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+  :root {
+    --ink: #2b2420;
+    --paper: #f7f3ec;
+    --accent: #b5562e;
+    --line: #ddd3c4;
+    --muted: #8a7e6f;
+    --danger: #c0392b;
+    --ok: #2e7d32;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  header {
+    padding: 20px;
+    text-align: center;
+    border-bottom: 1px solid var(--line);
+  }
+  header h1 { margin: 0; font-size: 1.4rem; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+  .login-box {
+    max-width: 320px;
+    margin: 60px auto;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+  }
+  input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 1rem;
+    margin: 12px 0;
+  }
+  button.primary {
+    width: 100%;
+    padding: 10px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .toolbar select, .toolbar button {
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .toolbar select { flex: 1; min-width: 150px; }
+  .stat { color: var(--muted); font-size: 0.85rem; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .card.deleted { opacity: 0.5; }
+  .thumb-wrap {
+    aspect-ratio: 1;
+    overflow: hidden;
+    background: #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .thumb-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .2s;
+  }
+  .card-body { padding: 10px; }
+  .card-body .meta {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 8px;
+    word-break: break-all;
+  }
+  .card-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .card-actions button {
+    flex: 1;
+    padding: 6px 4px;
+    font-size: 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #f9f6f0;
+    cursor: pointer;
+  }
+  .card-actions button.danger { color: var(--danger); border-color: var(--danger); }
+  .card-actions button.ok { color: var(--ok); border-color: var(--ok); }
+  .badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--line);
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .badge.deleted { background: var(--danger); color: #fff; }
+  .empty { text-align: center; color: var(--muted); padding: 40px 0; }
+  .spinner { text-align: center; color: var(--muted); padding: 30px 0; }
+  .msg { margin-top: 10px; font-size: 0.9rem; text-align: center; }
+  .msg.error { color: var(--danger); }
+</style>
+</head>
+<body>
+<div id="app">
+  <header><h1>校友相簿 - 管理後台</h1></header>
+
+  <div class="container">
+    <!-- 登入畫面 -->
+    <div class="login-box" v-if="!loggedIn">
+      <p>請輸入管理密碼</p>
+      <input type="password" v-model="adminPassword" @keyup.enter="login" placeholder="管理密碼">
+      <button class="primary" @click="login" :disabled="loggingIn">
+        {{ loggingIn ? '驗證中...' : '登入' }}
+      </button>
+      <div class="msg error" v-if="loginError">{{ loginError }}</div>
+    </div>
+
+    <!-- 管理畫面 -->
+    <div v-else>
+      <div class="toolbar">
+        <select v-model="filterYear">
+          <option value="">全部屆次</option>
+          <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
+        </select>
+        <select v-model="filterStatus">
+          <option value="active">未刪除</option>
+          <option value="deleted">已刪除</option>
+          <option value="all">全部</option>
+        </select>
+        <button @click="loadList">重新整理</button>
+        <span class="stat">共 {{ filteredPhotos.length }} 張</span>
+      </div>
+
+      <div v-if="loading" class="spinner">載入中...</div>
+      <div v-else-if="filteredPhotos.length===0" class="empty">沒有符合條件的照片</div>
+      <div v-else class="grid">
+        <div class="card" :class="{deleted: p.status==='deleted'}" v-for="p in filteredPhotos" :key="p.id">
+          <div class="thumb-wrap">
+            <img :src="p.thumbnailUrl" :style="{transform: 'rotate(' + p.rotation + 'deg)'}" loading="lazy">
+          </div>
+          <div class="card-body">
+            <span class="badge" :class="{deleted: p.status==='deleted'}">{{ p.year }}</span>
+            <span class="badge" v-if="p.status==='deleted'">已刪除</span>
+            <div class="meta">
+              {{ p.fileName }}<br>
+              {{ formatTime(p.uploadTime) }}
+            </div>
+            <div class="card-actions">
+              <button @click="rotate(p, -90)" :disabled="busyIds.has(p.id)">↺ 90°</button>
+              <button @click="rotate(p, 90)" :disabled="busyIds.has(p.id)">↻ 90°</button>
+              <a :href="p.driveUrl" target="_blank" style="flex:1;">
+                <button style="width:100%;" :disabled="busyIds.has(p.id)">原圖</button>
+              </a>
+            </div>
+            <div class="card-actions" style="margin-top:6px;">
+              <button v-if="p.status==='active'" class="danger" @click="deletePhoto(p)" :disabled="busyIds.has(p.id)">刪除</button>
+              <button v-else class="ok" @click="restorePhoto(p)" :disabled="busyIds.has(p.id)">還原</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const { createApp } = Vue;
+
+// === 請修改成你的GAS Web App URL ===
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxL6_tngyZGFYhRoZ_h5lJf18bl4vubYwXJkws35GTpAzgjXhrid70vj9Zn69AN5Vam/exec';
+
+createApp({
+  data() {
+    return {
+      loggedIn: false,
+      adminPassword: '',
+      loggingIn: false,
+      loginError: '',
+
+      photos: [],
+      loading: false,
+      filterYear: '',
+      filterStatus: 'active',
+      busyIds: new Set()
+    };
+  },
+  computed: {
+    years() {
+      const set = new Set(this.photos.map(p => p.year));
+      return [...set].sort();
+    },
+    filteredPhotos() {
+      return this.photos.filter(p => {
+        if (this.filterYear && p.year !== this.filterYear) return false;
+        if (this.filterStatus !== 'all' && p.status !== this.filterStatus) return false;
+        return true;
+      });
+    }
+  },
+  methods: {
+    formatTime(iso) {
+      const d = new Date(iso);
+      return d.toLocaleString('zh-TW', { hour12: false });
+    },
+    async login() {
+      this.loggingIn = true;
+      this.loginError = '';
+      try {
+        const data = await this.callApi({ action: 'adminList', password: this.adminPassword });
+        if (data.success) {
+          this.loggedIn = true;
+          this.photos = data.photos;
+          sessionStorage.setItem('adminPwd', this.adminPassword); // 僅本次分頁session，方便操作不用每次輸入
+        } else {
+          this.loginError = data.error || '登入失敗';
+        }
+      } catch (err) {
+        this.loginError = '連線失敗，請稍後再試';
+      } finally {
+        this.loggingIn = false;
+      }
+    },
+    async loadList() {
+      this.loading = true;
+      try {
+        const data = await this.callApi({ action: 'adminList', password: this.adminPassword });
+        if (data.success) this.photos = data.photos;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async callApi(payload) {
+      const res = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      return res.json();
+    },
+    async rotate(photo, delta) {
+      this.busyIds.add(photo.id);
+      const newRotation = ((photo.rotation + delta) % 360 + 360) % 360;
+      try {
+        const data = await this.callApi({
+          action: 'adminRotate',
+          password: this.adminPassword,
+          id: photo.id,
+          rotation: newRotation
+        });
+        if (data.success) photo.rotation = newRotation;
+        else alert(data.error || '操作失敗');
+      } finally {
+        this.busyIds.delete(photo.id);
+      }
+    },
+    async deletePhoto(photo) {
+      if (!confirm(`確定要刪除「${photo.fileName}」嗎？\n(檔案會移到雲端硬碟垃圾桶，可還原)`)) return;
+      this.busyIds.add(photo.id);
+      try {
+        const data = await this.callApi({ action: 'adminDelete', password: this.adminPassword, id: photo.id });
+        if (data.success) photo.status = 'deleted';
+        else alert(data.error || '操作失敗');
+      } finally {
+        this.busyIds.delete(photo.id);
+      }
+    },
+    async restorePhoto(photo) {
+      this.busyIds.add(photo.id);
+      try {
+        const data = await this.callApi({ action: 'adminRestore', password: this.adminPassword, id: photo.id });
+        if (data.success) photo.status = 'active';
+        else alert(data.error || '操作失敗');
+      } finally {
+        this.busyIds.delete(photo.id);
+      }
+    }
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
