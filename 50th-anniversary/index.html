@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>50週年校友相簿</title>
+<title>陽明牙醫系50週年校友相簿</title>
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <style>
   :root {
@@ -139,6 +139,22 @@
     object-fit: cover;
     transition: transform .2s;
   }
+  
+  /* 新增：照片屆次標籤樣式 */
+  .photo-tag {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(43, 36, 32, 0.75); /* 使用深棕色墨水底色調配半透明 */
+    color: #fff;
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    pointer-events: none; /* 避免擋住點擊事件 */
+    z-index: 1;
+  }
+
   .empty {
     text-align: center;
     color: var(--muted);
@@ -191,6 +207,8 @@
   .nav-prev { left: 12px; }
   .nav-next { right: 12px; }
   .nav-btn:hover { background: rgba(255,255,255,0.3); }
+  
+  /* 修改 Lightbox 內的資訊列，讓它也能顯示屆次資訊 */
   .lightbox-counter {
     position: absolute;
     bottom: 16px;
@@ -198,9 +216,11 @@
     transform: translateX(-50%);
     color: #fff;
     font-size: 0.85rem;
-    background: rgba(0,0,0,0.4);
-    padding: 4px 12px;
+    background: rgba(0,0,0,0.5);
+    padding: 6px 14px;
     border-radius: 12px;
+    text-align: center;
+    line-height: 1.4;
   }
   @media (max-width: 600px) {
     .nav-btn { width: 40px; height: 40px; font-size: 1.6rem; }
@@ -225,27 +245,25 @@
       <button :class="{active: mode==='upload'}" @click="mode='upload'">上傳照片</button>
     </div>
 
-    <!-- 瀏覽相簿 -->
     <div class="panel" v-if="mode==='browse'">
       <div class="field">
         <label>選擇屆次</label>
-        <select v-model="browseYear" @change="loadAlbum">
-          <option value="">請選擇屆次</option>
+        <select v-model="browseYear" @change="onYearChange">
+          <option value="random">✨ 精選隨機照片 (15張)</option>
           <option v-for="f in folders" :key="f.year" :value="f.year">{{ f.year }}</option>
         </select>
       </div>
 
       <div v-if="albumLoading" class="spinner">載入中...</div>
-      <div v-else-if="browseYear && photos.length===0" class="empty">這個屆次目前還沒有照片</div>
-      <div v-else-if="browseYear" class="gallery">
+      <div v-else-if="photos.length===0" class="empty">目前沒有相符的照片</div>
+      <div v-else class="gallery">
         <div class="item" v-for="(p, idx) in photos" :key="p.id" @click="openLightbox(idx)">
           <img :src="p.thumbnailUrl" :style="{transform: 'rotate(' + p.rotation + 'deg)'}" loading="lazy" :alt="p.fileName">
+          <div class="photo-tag">{{ p.year }}</div>
         </div>
       </div>
-      <div v-else class="empty">請先選擇屆次</div>
     </div>
 
-    <!-- 上傳照片 -->
     <div class="panel" v-if="mode==='upload'">
       <div class="field">
         <label>選擇屆次</label>
@@ -287,7 +305,6 @@
     </div>
   </div>
 
-  <!-- Lightbox -->
   <div class="lightbox" v-if="lightboxIndex !== null"
        @click="lightboxIndex=null"
        @touchstart="onTouchStart"
@@ -298,14 +315,16 @@
          :style="{transform: 'rotate(' + photos[lightboxIndex].rotation + 'deg)'}"
          @click.stop>
     <button class="nav-btn nav-next" v-if="photos.length>1" @click.stop="nextPhoto">&#8250;</button>
-    <div class="lightbox-counter" v-if="photos.length>1">{{ lightboxIndex+1 }} / {{ photos.length }}</div>
+    <div class="lightbox-counter">
+      <div>【{{ photos[lightboxIndex].year }}】</div>
+      <span v-if="photos.length>1">{{ lightboxIndex+1 }} / {{ photos.length }}</span>
+    </div>
   </div>
 </div>
 
 <script>
 const { createApp } = Vue;
 
-// === GAS Web App URL ===
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxL6_tngyZGFYhRoZ_h5lJf18bl4vubYwXJkws35GTpAzgjXhrid70vj9Zn69AN5Vam/exec';
 
 createApp({
@@ -313,7 +332,7 @@ createApp({
     return {
       mode: 'browse',
       folders: [],
-      browseYear: '',
+      browseYear: 'random', // 預設改為隨機首頁
       photos: [],
       albumLoading: false,
       lightboxIndex: null,
@@ -322,7 +341,7 @@ createApp({
       uploadYear: '',
       uploadPassword: '',
       maxFiles: 15,
-      selectedFiles: [], // { file: Blob(compressed), previewUrl }
+      selectedFiles: [],
       isDragover: false,
       uploading: false,
       uploadProgress: 0,
@@ -336,7 +355,7 @@ createApp({
     }
   },
   mounted() {
-    this.loadFolders();
+    this.initApp();
     window.addEventListener('keydown', (e) => {
       if (this.lightboxIndex === null) return;
       if (e.key === 'ArrowLeft') this.prevPhoto();
@@ -345,6 +364,10 @@ createApp({
     });
   },
   methods: {
+    async initApp() {
+      await this.loadFolders();
+      this.loadRandomPhotos(); // 初始化時載入隨機 15 張
+    },
     async loadFolders() {
       try {
         const res = await fetch(`${GAS_URL}?action=getFolders`);
@@ -354,6 +377,13 @@ createApp({
         console.error(err);
       }
     },
+    onYearChange() {
+      if (this.browseYear === 'random') {
+        this.loadRandomPhotos();
+      } else {
+        this.loadAlbum();
+      }
+    },
     async loadAlbum() {
       if (!this.browseYear) { this.photos = []; return; }
       this.albumLoading = true;
@@ -361,6 +391,30 @@ createApp({
         const res = await fetch(`${GAS_URL}?action=getAlbum&year=${encodeURIComponent(this.browseYear)}`);
         const data = await res.json();
         this.photos = data.success ? data.photos : [];
+      } catch (err) {
+        this.photos = [];
+      } finally {
+        this.albumLoading = false;
+      }
+    },
+    // 新增：前端撈取所有照片並隨機洗牌取出 15 張
+    async loadRandomPhotos() {
+      this.albumLoading = true;
+      try {
+        const res = await fetch(`${GAS_URL}?action=getAllPhotos`);
+        const data = await res.json();
+        if (data.success && data.photos.length > 0) {
+          // Fisher-Yates Shuffle 洗牌演算法
+          let shuffled = [...data.photos];
+          for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+          }
+          // 擷取前 15 張
+          this.photos = shuffled.slice(0, 15);
+        } else {
+          this.photos = [];
+        }
       } catch (err) {
         this.photos = [];
       } finally {
@@ -383,9 +437,9 @@ createApp({
     },
     onTouchEnd(e) {
       const dx = e.changedTouches[0].clientX - this.touchStartX;
-      const threshold = 50; // 最小滑動距離(px)
-      if (dx > threshold) this.prevPhoto();      // 向右滑 -> 上一張
-      else if (dx < -threshold) this.nextPhoto(); // 向左滑 -> 下一張
+      const threshold = 50;
+      if (dx > threshold) this.prevPhoto();
+      else if (dx < -threshold) this.nextPhoto();
     },
     onFileSelect(e) {
       this.handleFiles(e.target.files);
@@ -421,7 +475,6 @@ createApp({
         });
       }
     },
-    // 壓縮圖片：最長邊限制2000px，輸出JPEG品質0.85
     compressImage(file) {
       return new Promise((resolve) => {
         const img = new Image();
@@ -473,7 +526,7 @@ createApp({
           const base64Data = await this.blobToBase64(f.blob);
           const res = await fetch(GAS_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 避免CORS preflight
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({
               action: 'upload',
               password: this.uploadPassword,
@@ -504,13 +557,11 @@ createApp({
         this.uploadMsgType = 'success';
         this.selectedFiles = [];
 
-        // 自動切換到瀏覽相簿，顯示剛上傳的屆次
         const uploadedYear = this.uploadYear;
         this.browseYear = uploadedYear;
         this.mode = 'browse';
         await this.loadAlbum();
 
-        // 清空upload面板的訊息，避免殘留
         this.uploadMsg = '';
         this.uploadMsgType = '';
       } else {
