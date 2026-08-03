@@ -140,18 +140,17 @@
     transition: transform .2s;
   }
   
-  /* 新增：照片屆次標籤樣式 */
   .photo-tag {
     position: absolute;
     bottom: 8px;
     left: 8px;
-    background: rgba(43, 36, 32, 0.75); /* 使用深棕色墨水底色調配半透明 */
+    background: rgba(43, 36, 32, 0.75);
     color: #fff;
     font-size: 0.75rem;
     padding: 3px 8px;
     border-radius: 4px;
     letter-spacing: 0.05em;
-    pointer-events: none; /* 避免擋住點擊事件 */
+    pointer-events: none;
     z-index: 1;
   }
 
@@ -208,7 +207,6 @@
   .nav-next { right: 12px; }
   .nav-btn:hover { background: rgba(255,255,255,0.3); }
   
-  /* 修改 Lightbox 內的資訊列，讓它也能顯示屆次資訊 */
   .lightbox-counter {
     position: absolute;
     bottom: 16px;
@@ -255,10 +253,10 @@
       </div>
 
       <div v-if="albumLoading" class="spinner">載入中...</div>
-      <div v-else-if="photos.length===0" class="empty">目前沒有相符的照片</div>
+      <div v-else-if="photos.length===0" class="empty">目前沒有照片</div>
       <div v-else class="gallery">
         <div class="item" v-for="(p, idx) in photos" :key="p.id" @click="openLightbox(idx)">
-          <img :src="p.thumbnailUrl" :style="{transform: 'rotate(' + p.rotation + 'deg)'}" loading="lazy" :alt="p.fileName">
+          <img :src="p.thumbnailUrl" :style="{transform: 'rotate(' + p.rotation + 'deg)'}" loading="lazy" :alt="p.fileName" @error="onImgError(p)">
           <div class="photo-tag">{{ p.year }}</div>
         </div>
       </div>
@@ -332,9 +330,9 @@ createApp({
     return {
       mode: 'browse',
       folders: [],
-      browseYear: 'random', // 預設改為隨機首頁
+      browseYear: 'random',
       photos: [],
-      albumLoading: false,
+      albumLoading: true,
       lightboxIndex: null,
       touchStartX: 0,
 
@@ -364,9 +362,12 @@ createApp({
     });
   },
   methods: {
+    // 💡 修正 1：改為預熱後再平行/順序載入，避免 GAS 容器衝突
     async initApp() {
-      await this.loadFolders();
-      this.loadRandomPhotos(); // 初始化時載入隨機 15 張
+      // 先打隨機照片（同時喚醒 GAS 容器）
+      await this.loadRandomPhotos();
+      // 容器熱身完畢後順便抓選單資料
+      this.loadFolders();
     },
     async loadFolders() {
       try {
@@ -374,7 +375,7 @@ createApp({
         const data = await res.json();
         if (data.success) this.folders = data.folders;
       } catch (err) {
-        console.error(err);
+        console.error('載入資料夾失敗:', err);
       }
     },
     onYearChange() {
@@ -397,28 +398,34 @@ createApp({
         this.albumLoading = false;
       }
     },
-    // 新增：前端撈取所有照片並隨機洗牌取出 15 張
-    async loadRandomPhotos() {
+    // 💡 修正 2：修復 Auto-Retry 邏輯與括號錯誤
+    async loadRandomPhotos(retryCount = 2) {
       this.albumLoading = true;
       try {
-        const res = await fetch(`${GAS_URL}?action=getAllPhotos`);
+        const res = await fetch(`${GAS_URL}?action=getRandomPhotos`);
         const data = await res.json();
-        if (data.success && data.photos.length > 0) {
-          // Fisher-Yates Shuffle 洗牌演算法
-          let shuffled = [...data.photos];
-          for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-          }
-          // 擷取前 15 張
-          this.photos = shuffled.slice(0, 15);
+        
+        if (data.success && data.photos && data.photos.length > 0) {
+          this.photos = data.photos;
+          this.albumLoading = false;
         } else {
-          this.photos = [];
+          throw new Error('資料為空或失敗');
         }
       } catch (err) {
-        this.photos = [];
-      } finally {
-        this.albumLoading = false;
+        console.warn(`載入失敗，剩餘重試次數: ${retryCount}`, err);
+        if (retryCount > 0) {
+          setTimeout(() => {
+            this.loadRandomPhotos(retryCount - 1);
+          }, 1200); // 延遲 1.2 秒重試
+        } else {
+          this.photos = [];
+          this.albumLoading = false;
+        }
+      }
+    },
+    onImgError(p) {
+      if (p.thumbnailUrl && p.thumbnailUrl.includes('lh3.googleusercontent.com')) {
+        p.thumbnailUrl = 'https://drive.google.com/thumbnail?id=' + p.fileId + '&sz=w1000';
       }
     },
     openLightbox(index) {
@@ -448,6 +455,7 @@ createApp({
       this.isDragover = false;
       this.handleFiles(e.dataTransfer.files);
     },
+    // 💡 修正 3：使用非阻塞式壓縮，防止瀏覽器 UI 凍結
     async handleFiles(fileList) {
       this.uploadMsg = '';
       const maxFiles = this.maxFiles;
@@ -456,27 +464,31 @@ createApp({
       if (this.selectedFiles.length + incoming.length > maxFiles) {
         const remaining = maxFiles - this.selectedFiles.length;
         if (remaining <= 0) {
-          this.uploadMsg = `單次最多上傳 ${maxFiles} 張照片，請先上傳目前選取的照片，或移除部分照片後再加選`;
+          this.uploadMsg = `單次最多上傳 ${maxFiles} 張照片，請先上傳或移除照片`;
         } else {
-          this.uploadMsg = `單次最多上傳 ${maxFiles} 張照片，已超過上限，請分批上傳（本次僅加入前 ${remaining} 張）`;
+          this.uploadMsg = `超過上限，本次僅加入前 ${remaining} 張`;
         }
         this.uploadMsgType = 'error';
         incoming.splice(remaining < 0 ? 0 : remaining);
       }
 
       for (const file of incoming) {
-        const compressed = await this.compressImage(file);
-        const previewUrl = URL.createObjectURL(compressed.blob);
-        this.selectedFiles.push({
-          name: file.name,
-          blob: compressed.blob,
-          mimeType: compressed.mimeType,
-          previewUrl
-        });
+        try {
+          const compressed = await this.compressImage(file);
+          const previewUrl = URL.createObjectURL(compressed.blob);
+          this.selectedFiles.push({
+            name: file.name,
+            blob: compressed.blob,
+            mimeType: compressed.mimeType,
+            previewUrl
+          });
+        } catch (e) {
+          console.error('壓縮圖片失敗:', e);
+        }
       }
     },
     compressImage(file) {
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         const img = new Image();
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -498,11 +510,14 @@ createApp({
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
             canvas.toBlob((blob) => {
-              resolve({ blob, mimeType: 'image/jpeg' });
+              if (blob) resolve({ blob, mimeType: 'image/jpeg' });
+              else reject(new Error('Canvas toBlob 失敗'));
             }, 'image/jpeg', 0.85);
           };
+          img.onerror = reject;
           img.src = e.target.result;
         };
+        reader.onerror = reject;
         reader.readAsDataURL(file);
       });
     },
@@ -539,6 +554,7 @@ createApp({
           const data = await res.json();
           if (data.success) successCount++;
           else failCount++;
+          
           if (!data.success && data.error === '密碼錯誤') {
             this.uploadMsg = '密碼錯誤，請確認後再試';
             this.uploadMsgType = 'error';
