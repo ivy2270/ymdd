@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>陽明交通大學牙醫學系50週年系慶暨牙醫學院25週年院慶 聯誼晚宴報名表</title>
-<link rel="icon" type="image/png" href="favicon.png">
+  <link rel="icon" type="image/png" href="favicon.png">
   <link href="https://font.emtech.cc/css/ChironSungHK" rel="stylesheet" />
   <!-- 引入 Font Awesome 6 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -22,7 +22,7 @@
       --border-color: #e2e8f0;
     }
 
-    /* 修正問題 1：強制所有元件（含按鈕、表單輸入框）繼承字型 */
+    /* 強制所有元件繼承字型 */
     * { 
       box-sizing: border-box; 
       font-family: 'ChironSungHK', 'Noto Sans TC', sans-serif;
@@ -40,31 +40,28 @@
       line-height: 1.6;
     }
 
-    /* 讓卡片容器上方內縮歸零，由 Banner 填滿 */
     .container {
       max-width: 720px;
       margin: 0 auto;
       background: var(--card-bg);
-      padding: 0 30px 35px 30px; /* 將上邊界 (top) 設為 0 */
+      padding: 0 30px 35px 30px;
       border-radius: 16px;
       box-shadow: 0 10px 25px rgba(8, 30, 81, 0.08);
-      overflow: hidden; /* 確保 Banner 上方圓角不會溢出 */
+      overflow: hidden;
     }
 
-    /* 滿版 Banner 容器 */
     .hero-banner {
-      margin-left: -30px;  /* 向左拉伸抵銷 container 的 padding */
-      margin-right: -30px; /* 向右拉伸抵銷 container 的 padding */
-      margin-bottom: 25px; /* 與下方內容保持適當間距 */
-      width: calc(100% + 60px); /* 補滿左右被拉伸的寬度 */
+      margin-left: -30px;
+      margin-right: -30px;
+      margin-bottom: 25px;
+      width: calc(100% + 60px);
       display: block;
     }
 
-    /* Banner 圖片本體 */
     .hero-banner img {
       width: 100%;
       height: auto;
-      display: block; /* 消除圖片底部預設空白縫隙 */
+      display: block;
     }
 
     h1, h2, h3 { color: var(--primary-navy); text-align: center; font-weight: 700; margin: 0; }
@@ -88,7 +85,6 @@
       border: 1px solid #eee8dd;
     }
 
-    /* 溫馨邀請函卡片 */
     .letter-card .greeting {
       font-weight: bold;
       color: var(--primary-navy);
@@ -102,7 +98,6 @@
       line-height: 1.7;
     }
 
-    /* 活動細節列表化 */
     .card-header {
       display: flex;
       align-items: center;
@@ -124,7 +119,6 @@
       color: var(--text-muted);
     }
 
-    /* 時間軸 */
     .timeline { padding: 0; }
     .timeline-item {
       display: flex;
@@ -147,7 +141,6 @@
     }
     .timeline-item .note { margin: 2px 0 0 0; color: var(--text-muted); font-size: 0.85rem; }
 
-    /* 晚宴資訊 */
     .gala-meta {
       display: flex;
       flex-direction: column;
@@ -184,7 +177,6 @@
       line-height: 1.5;
     }
 
-    /* 截止通知卡片 */
     .notice-card { text-align: center; }
     .deadline-badge {
       color: #991b1b;
@@ -200,7 +192,6 @@
       color: var(--text-main);
     }
 
-    /* 修正問題 3：解決名稱過長導致姓名被擠壓換行的問題 */
     .inviter-row {
       display: flex;
       justify-content: space-between;
@@ -210,14 +201,11 @@
       gap: 12px;
       text-align: left;
     }
-    .inviter-title {
-      flex: 1;
-      line-height: 1.3;
-    }
+    .inviter-title { flex: 1; line-height: 1.3; }
     .inviter-row strong { 
       color: var(--primary-navy); 
       font-size: 0.95rem; 
-      white-space: nowrap; /* 確保姓名絕對不換行 */
+      white-space: nowrap; 
       text-align: right;
     }
     .invitation-footnote {
@@ -227,7 +215,6 @@
       margin-top: 6px;
     }
 
-    /* 功能按鈕 */
     .section { display: none; }
     .section.active { display: block; }
 
@@ -257,8 +244,7 @@
     .btn-outline:hover { background-color: #f0f4f8; }
 
     .flow-options { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
-	
-	/* 活動 DM 容器與圖片樣式 */
+    
     .event-dm-container {
       margin-top: 30px;
       width: 100%;
@@ -267,10 +253,10 @@
 
     .event-dm-container img {
       width: 100%;
-      max-width: 100%; /* 確保手機端不會超出邊界 */
-      height: auto;    /* 保持 1200*1697 的直式原始比例 */
-      border-radius: 12px; /* 搭配頁面的圓角風格 */
-      box-shadow: 0 4px 15px rgba(8, 30, 81, 0.08); /* 微微的質感陰影 */
+      max-width: 100%;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(8, 30, 81, 0.08);
       display: block;
     }
 
@@ -323,15 +309,78 @@
       margin: 6px 0;
     }
 
+    /* Modal 彈窗與表格樣式 */
     .modal {
-      display: none; position: fixed; z-index: 1000;
+      display: none; 
+      position: fixed; 
+      z-index: 1000;
       left: 0; top: 0; width: 100%; height: 100%;
-      background-color: rgba(8, 30, 81, 0.5);
-      align-items: center; justify-content: center;
+      background-color: rgba(8, 30, 81, 0.6);
+      backdrop-filter: blur(3px);
+      align-items: center; 
+      justify-content: center;
+      padding: 16px;
     }
     .modal-content {
-      background-color: #fff; padding: 25px; border-radius: 12px;
-      max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;
+      background-color: #fff; 
+      padding: 24px; 
+      border-radius: 16px;
+      max-width: 520px; 
+      width: 100%; 
+      max-height: 85vh; 
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      animation: modalFadeIn 0.25s ease-out;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+    .modal-header h3 {
+      font-size: 1.2rem;
+      color: var(--primary-navy);
+      margin: 0;
+    }
+    .modal-body {
+      overflow-y: auto;
+      flex: 1;
+      margin-bottom: 16px;
+      padding-right: 4px;
+    }
+
+    /* 雙欄表格樣式 */
+    .table-status-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 5px;
+      font-size: 0.95rem;
+    }
+    .table-status-table th {
+      background-color: #f0f4f8;
+      color: var(--primary-navy);
+      font-weight: 700;
+      text-align: center;
+      padding: 10px 12px;
+      border-bottom: 2px solid var(--accent-soft-blue);
+      position: sticky;
+      top: 0;
+    }
+    .table-status-table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+    .table-status-table tr:hover {
+      background-color: var(--section-bg);
     }
 
     .amount-display {
@@ -450,7 +499,6 @@
           <i class="fa-regular fa-clock" style="margin-right: 4px;"></i> 請於 <strong>115年09月04日(五)</strong> 前完成報名登記
         </div>
 
-        <!-- 修正問題 3 的結構 -->
         <div class="inviter-list">
           <div class="inviter-row"><span class="inviter-title">陽明交通大學牙醫學院 院長</span><strong>洪善鈴</strong></div>
           <div class="inviter-row"><span class="inviter-title">陽明交通大學牙醫學系 系主任</span><strong>林元敏</strong></div>
@@ -468,11 +516,11 @@
       <button class="btn btn-outline" onclick="selectFlow('alumni')">僅參加校友回娘家</button>
       <button class="btn btn-outline" onclick="selectFlow('gala')">僅參加晚宴</button>
     </div>
-	
-	<div class="event-dm-container">
+    
+    <div class="event-dm-container">
       <img src="dm.jpg" alt="50週年系慶暨25週年院慶 活動DM" loading="lazy">
     </div>
-	
+    
   </div>
 
   <!-- 2. 問卷頁與完成頁保留原有 JavaScript 邏輯動態寫入 -->
@@ -507,7 +555,7 @@
         <hr style="margin: 25px 0; border: 0; border-top: 1px solid var(--accent-soft-blue);">
         <h3><i class="fa-solid fa-wine-glass icon-accent"></i> 晚宴報名細節</h3>
 
-        <button type="button" class="btn btn-secondary" style="margin-bottom: 20px;" onclick="checkTablesStatus()"><i class="fa-solid fa-magnifying-glass" style="margin-right: 6px;"></i> 查看認桌狀態</button>
+        <button type="button" class="btn btn-secondary" style="margin-bottom: 20px;" onclick="loadAndShowTableModal()"><i class="fa-solid fa-magnifying-glass" style="margin-right: 6px;"></i> 查看認桌狀態</button>
 
         <div class="form-group">
           <label class="required">晚宴參與方式</label>
@@ -602,7 +650,7 @@
     <div class="info-card" style="font-size: 0.88rem; text-align: left;">
       <strong>陽明大學牙醫校友總會秘書處</strong><br>
       秘書長：林世明 | 副秘書長：詹雨璇<br>
-      秘　書：Mendy、Grace<br>
+      秘 書：Mendy、Grace<br>
       <i class="fa-solid fa-phone" style="width: 16px; color: var(--primary-navy);"></i> 電話：(02) 2823-8632<br>
       <i class="fa-regular fa-envelope" style="width: 16px; color: var(--primary-navy);"></i> E-mail：ym.dentist@msa.hinet.net
     </div>
@@ -610,11 +658,26 @@
 
 </div>
 
-<!-- Modal 保持完整 -->
-<div id="tableModal" class="modal">
+<!-- 修正後的 Modal 彈窗 (使用標準 <table> 與 雙欄 <th> 結構) -->
+<div id="tableStatusModal" class="modal" onclick="if(event.target === this) closeModal()">
   <div class="modal-content">
-    <h3>已認桌查詢</h3>
-    <div id="modal-table-list">讀取中...</div>
+    <div class="modal-header">
+      <h3><i class="fa-solid fa-chair icon-accent"></i> 已認桌狀態查詢</h3>
+      <button type="button" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-muted);" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <table class="table-status-table">
+        <thead>
+          <tr>
+            <th style="width: 35%;">屆次</th>
+            <th style="width: 65%;">桌名</th>
+          </tr>
+        </thead>
+        <tbody id="tableStatusBody">
+          <tr><td colspan="2" style="text-align:center;">資料載入中...</td></tr>
+        </tbody>
+      </table>
+    </div>
     <button class="btn btn-secondary" onclick="closeModal()">關閉</button>
   </div>
 </div>
@@ -625,7 +688,39 @@
   let selectedFlow = "";
   let calculatedAmount = 0;
 
-  window.onload = function() { initGradYearOptions(); };
+  // 用於預載認桌資料的全域快取變數與狀態
+  let cachedTableData = null;
+  let isFetchingTables = false;
+
+  window.onload = function() { 
+    initGradYearOptions(); 
+    preloadTableStatus(); // 頁面一開啟，背景自動預載認桌資料（敲醒 GAS）
+  };
+
+  /**
+   * 背景靜默預載認桌資料 (使用者無感)
+   */
+  async function preloadTableStatus() {
+    if (isFetchingTables || cachedTableData) return;
+    isFetchingTables = true;
+
+    try {
+      const response = await fetch(GAS_WEB_APP_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "getTablesStatus" })
+      });
+
+      const result = await response.json();
+      if (result.result === "success") {
+        cachedTableData = result.tables; // 成功存入記憶體
+      }
+    } catch (err) {
+      console.warn("背景預載認桌資料失敗，使用者點擊時會再手動嘗試：", err);
+    } finally {
+      isFetchingTables = false;
+    }
+  }
 
   function initGradYearOptions() {
     const select = document.getElementById('gradYear');
@@ -647,7 +742,6 @@
     document.getElementById('step-start').classList.remove('active');
     document.getElementById('step-form').classList.add('active');
     
-    // 修正問題 2：切換頁面時自動回到頂部
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     const galaSection = document.getElementById('gala-section');
@@ -668,8 +762,6 @@
   function goBackStart() {
     document.getElementById('step-form').classList.remove('active');
     document.getElementById('step-start').classList.add('active');
-    
-    // 修正問題 2：返回上一步時也滾動回頂部
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -735,37 +827,94 @@
     navigator.clipboard.writeText(acc).then(() => alert("已複製匯款帳號：" + acc));
   }
 
-  function checkTablesStatus() {
-    document.getElementById('tableModal').style.display = 'flex';
-    document.getElementById('modal-table-list').innerHTML = "正在載入最新認桌狀態...";
+  /**
+   * 載入並顯示認桌狀態彈窗 (整合快取機制)
+   */
+  async function loadAndShowTableModal() {
+    const modal = document.getElementById('tableStatusModal');
+    const tableBody = document.getElementById('tableStatusBody');
+    
+    modal.style.display = 'flex'; // 彈窗置中顯示
 
-    fetch(GAS_WEB_APP_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: "getTablesStatus" })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.result === 'success') {
-        if (data.tables.length === 0) {
-          document.getElementById('modal-table-list').innerHTML = "<p>目前尚無認桌資料，歡迎踴躍認桌！</p>";
-        } else {
-          let html = '<ul style="padding-left:15px; text-align:left;">';
-          data.tables.forEach(t => {
-            html += `<li style="margin-bottom:8px;"><b>[${t.gradYear}] ${t.tableName}</b> (${t.tableCount}桌)<br><small style="color:var(--text-muted)">名單：${t.attendees}</small></li>`;
-          });
-          html += '</ul>';
-          document.getElementById('modal-table-list').innerHTML = html;
-        }
+    // 1. 如果已有快取資料，直接瞬間顯示！
+    if (cachedTableData) {
+      renderTableStatus(cachedTableData);
+      return;
+    }
+
+    // 2. 如果背景還在抓，顯示載入中並等待 completion
+    tableBody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> 資料同步中，請稍候...</td></tr>';
+
+    if (!isFetchingTables) {
+      // 萬一先前背景請求失敗了，這裡補發一次
+      await preloadTableStatus();
+    } else {
+      // 每 300ms 輪詢檢查背景 fetch 是否完成 (最多等 10 秒)
+      let waitTime = 0;
+      while (isFetchingTables && waitTime < 10000) {
+        await new Promise(res => setTimeout(res, 300));
+        waitTime += 300;
       }
-    })
-    .catch(() => {
-      document.getElementById('modal-table-list').innerHTML = "<p style='color:red;'>無法取得狀態，請直接與秘書處聯繫。</p>";
+    }
+
+    // 3. 再次檢查是否有拿到快取資料
+    if (cachedTableData) {
+      renderTableStatus(cachedTableData);
+    } else {
+      tableBody.innerHTML = '<tr><td colspan="2" style="color:red; text-align:center; padding:20px;">網路連線較慢，請點擊下方按鈕重試。<br><button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="retryFetchTableModal()">重新載入</button></td></tr>';
+    }
+  }
+
+  /**
+   * 手動重新載入認桌資料 (供失敗時點擊)
+   */
+  async function retryFetchTableModal() {
+    cachedTableData = null;
+    await preloadTableStatus();
+    loadAndShowTableModal();
+  }
+
+  /**
+   * 渲染認桌資料 (雙欄結構)
+   */
+  function renderTableStatus(tables) {
+    const tableBody = document.getElementById('tableStatusBody');
+
+    if (!tables || tables.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:20px; color:var(--text-muted);">目前尚無認桌資料</td></tr>';
+      return;
+    }
+
+    let html = '';
+    tables.forEach(item => {
+      // 兼顧 key 值的容錯 (無論後端傳 gradYear / year 或 tableName / name)
+      const gradYear = item.gradYear || item.year || '-';
+      const tableName = item.tableName || item.name || '-';
+
+      html += `
+        <tr>
+          <td style="text-align:center;">${escapeHtml(gradYear)}</td>
+          <td><strong>${escapeHtml(tableName)}</strong></td>
+        </tr>
+      `;
     });
+
+    tableBody.innerHTML = html;
+  }
+
+  // 防呆與字元轉義，防止 undefined 顯現
+  function escapeHtml(text) {
+    if (text === null || text === undefined || text === '') return '-';
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
   function closeModal() {
-    document.getElementById('tableModal').style.display = 'none';
+    document.getElementById('tableStatusModal').style.display = 'none';
   }
 
   function handleFormSubmit(e) {
@@ -805,6 +954,11 @@
     .then(res => res.json())
     .then(data => {
       if (data.result === 'success') {
+        // 如果報名成功且是認桌報名，順便清除快取，確保下次點開拿到最新資料
+        if (galaTypeVal === '認桌報名') {
+          cachedTableData = null;
+          preloadTableStatus();
+        }
         renderCompletePage(formData);
       } else {
         alert("提交失敗：" + data.message);
@@ -823,7 +977,6 @@
     document.getElementById('step-form').classList.remove('active');
     document.getElementById('step-complete').classList.add('active');
 
-    // 修正問題 2：提交完成切換頁面時也自動回到頁首
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     let summaryHtml = `
