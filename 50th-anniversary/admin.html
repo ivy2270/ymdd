@@ -39,14 +39,43 @@
     padding: 24px;
     text-align: center;
   }
-  input[type="password"] {
+/* 1. 讓 password 與 text 兩種型態都保有基本的輸入框外觀 */
+  input[type="password"],
+  input[type="text"].pwd-input {
     width: 100%;
     padding: 10px;
     border: 1px solid var(--line);
     border-radius: 8px;
     font-size: 1rem;
+    background: #fff;
+  }
+
+  /* 2. 外層包裹容器，掌控上下邊距 */
+  .password-wrap {
+    position: relative;
     margin: 12px 0;
   }
+
+  /* 3. 包在裡面的 input，右邊留白給按鈕，並覆蓋掉多餘的 margin */
+  .password-wrap input {
+    margin: 0;
+    padding-right: 85px; /* 留空間給「顯示密碼」文字 */
+  }
+
+  /* 4. 切換按鈕定位 */
+  .password-wrap .toggle-pwd {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--accent);
+    padding: 4px;
+  }
+  
   button.primary {
     width: 100%;
     padding: 10px;
@@ -149,7 +178,17 @@
     <!-- 登入畫面 -->
     <div class="login-box" v-if="!loggedIn">
       <p>請輸入管理密碼</p>
-      <input type="password" v-model="adminPassword" @keyup.enter="login" placeholder="管理密碼">
+      <div class="password-wrap">
+  <input 
+    :type="showAdminPassword ? 'text' : 'password'" 
+    class="pwd-input" 
+    v-model="adminPassword" 
+    @keyup.enter="login" 
+    placeholder="管理密碼">
+  <button type="button" class="toggle-pwd" @click="showAdminPassword = !showAdminPassword">
+    {{ showAdminPassword ? '隱藏密碼' : '顯示密碼' }}
+  </button>
+</div>
       <button class="primary" @click="login" :disabled="loggingIn">
         {{ loggingIn ? '驗證中...' : '登入' }}
       </button>
@@ -208,13 +247,14 @@
 const { createApp } = Vue;
 
 // === 請修改成你的GAS Web App URL ===
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxL6_tngyZGFYhRoZ_h5lJf18bl4vubYwXJkws35GTpAzgjXhrid70vj9Zn69AN5Vam/exec';
+const GAS_URL = 'https://alumni-album-worker.ivy2270.workers.dev';
 
 createApp({
   data() {
     return {
       loggedIn: false,
       adminPassword: '',
+	  showAdminPassword: false,
       loggingIn: false,
       loginError: '',
 
