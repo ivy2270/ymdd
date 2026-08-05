@@ -750,10 +750,13 @@
     if (type === 'alumni') {
       formTitle.textContent = "校友回娘家 - 報名表";
       galaSection.style.display = 'none';
-      setGalaRequired(false);
+      setGalaRequired(false); // 關閉晚宴相關欄位的 required
     } else {
       formTitle.textContent = (type === 'gala') ? "校友聯誼晚宴 - 報名表" : "校友回娘家 + 晚宴 - 報名表";
       galaSection.style.display = 'block';
+      
+      setGalaRequired(true); // 關鍵修正：開啟晚宴相關欄位的 required！
+      
       document.querySelector('input[name="galaType"][value="個人報名"]').checked = true;
       toggleGalaType('personal');
     }
@@ -766,21 +769,73 @@
   }
 
   function setGalaRequired(isRequired) {
-    document.getElementById('bankLast5').required = isRequired;
+    // 設定匯款後五碼必填
+    const bankLast5 = document.getElementById('bankLast5');
+    bankLast5.required = isRequired;
+    bankLast5.disabled = !isRequired;
+
+    // 設定 Radio 按鈕必填
+    const galaRadios = document.querySelectorAll('input[name="galaType"]');
+    galaRadios.forEach(r => { r.required = isRequired; r.disabled = !isRequired; });
+
+    if (!isRequired) {
+      // 僅參加校友回娘家時：關閉「並停用」晚宴相關欄位（required + disabled 雙重保險）。
+      // 只靠 display:none 隱藏，部分行動瀏覽器／App 內建瀏覽器對「隱藏欄位排除必填驗證」
+      // 的支援不一致，可能導致送出按鈕點擊沒反應；disabled 的欄位則保證一定會被排除。
+      const tableNameInput = document.getElementById('tableName');
+      const tableAttendeesInput = document.getElementById('tableAttendees');
+      tableNameInput.required = false;
+      tableNameInput.disabled = true;
+      tableAttendeesInput.required = false;
+      tableAttendeesInput.disabled = true;
+
+      document.querySelectorAll('.personal-name-input').forEach(el => {
+        el.required = false;
+        el.disabled = true;
+      });
+    }
   }
 
   function toggleGalaType(type) {
     const personalFields = document.getElementById('personal-fields');
     const tableFields = document.getElementById('table-fields');
+    
+    const tableNameInput = document.getElementById('tableName');
+    const tableAttendeesInput = document.getElementById('tableAttendees');
 
     if (type === 'personal') {
       personalFields.style.display = 'block';
       tableFields.style.display = 'none';
+      
+      // 個人報名：認桌欄位不設為必填，並停用（避免隱藏欄位仍殘留必填狀態阻礙驗證）
+      tableNameInput.required = false;
+      tableNameInput.disabled = true;
+      tableAttendeesInput.required = false;
+      tableAttendeesInput.disabled = true;
+
+      // 個人姓名欄位恢復必填 + 啟用
+      document.querySelectorAll('.personal-name-input').forEach(el => {
+        el.disabled = false;
+        el.required = true;
+      });
+
       const container = document.getElementById('attendees-container');
       if (container.children.length === 0) addAttendeeInput();
     } else {
       personalFields.style.display = 'none';
       tableFields.style.display = 'block';
+
+      // 認桌報名：啟用認桌欄位必填
+      tableNameInput.required = true;
+      tableNameInput.disabled = false;
+      tableAttendeesInput.required = true;
+      tableAttendeesInput.disabled = false;
+
+      // 個人姓名欄位停用（避免隱藏卻仍為必填，切換來回時卡住送出按鈕）
+      document.querySelectorAll('.personal-name-input').forEach(el => {
+        el.required = false;
+        el.disabled = true;
+      });
     }
     calculateAmount();
   }
@@ -917,34 +972,57 @@
     document.getElementById('tableStatusModal').style.display = 'none';
   }
 
+  let isSubmitting = false;
+
   function handleFormSubmit(e) {
     e.preventDefault();
+
+    // 防止重複送出（例如快速連按兩下、或 Enter 鍵誤觸發）
+    if (isSubmitting) return;
+
     const submitBtn = document.getElementById('submit-btn');
+    let formData;
+
+    // 組資料的過程包在 try/catch 裡：只要有任何欄位取值失敗，也一定會把按鈕還原，
+    // 不會讓按鈕卡在「資料傳送中」卻沒有任何反應或提示。
+    try {
+      const personalNames = Array.from(document.querySelectorAll('.personal-name-input'))
+        .map(input => input.value.trim()).filter(v => v !== "");
+
+      let galaTypeVal = '無';
+      if (selectedFlow !== 'alumni') {
+        const checkedRadio = document.querySelector('input[name="galaType"]:checked');
+        if (!checkedRadio) {
+          throw new Error('請選擇晚宴參與方式（個人報名或認桌報名）');
+        }
+        galaTypeVal = checkedRadio.value;
+      }
+
+      formData = {
+        gradYear: document.getElementById('gradYear').value,
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        attendAlumniDay: (selectedFlow === 'both' || selectedFlow === 'alumni'),
+        attendGala: (selectedFlow === 'both' || selectedFlow === 'gala'),
+        galaType: galaTypeVal,
+        personalCount: personalNames.length,
+        personalAttendees: personalNames.join(', '),
+        tableCount: (galaTypeVal === '認桌報名') ? document.getElementById('tableCount').value : 0,
+        tableName: (galaTypeVal === '認桌報名') ? document.getElementById('tableName').value : '',
+        tableAttendees: (galaTypeVal === '認桌報名') ? document.getElementById('tableAttendees').value : '',
+        totalAmount: calculatedAmount,
+        bankLast5: (selectedFlow === 'alumni') ? '' : document.getElementById('bankLast5').value,
+        note: document.getElementById('note').value
+      };
+    } catch (err) {
+      alert(err.message || "表單資料有誤，請確認填寫內容後再試一次。");
+      return;
+    }
+
+    isSubmitting = true;
     submitBtn.disabled = true;
     submitBtn.textContent = "資料傳送中，請稍候...";
-
-    const personalNames = Array.from(document.querySelectorAll('.personal-name-input'))
-      .map(input => input.value.trim()).filter(v => v !== "");
-
-    const galaTypeVal = (selectedFlow === 'alumni') ? '無' : document.querySelector('input[name="galaType"]:checked').value;
-
-    const formData = {
-      gradYear: document.getElementById('gradYear').value,
-      name: document.getElementById('name').value,
-      phone: document.getElementById('phone').value,
-      email: document.getElementById('email').value,
-      attendAlumniDay: (selectedFlow === 'both' || selectedFlow === 'alumni'),
-      attendGala: (selectedFlow === 'both' || selectedFlow === 'gala'),
-      galaType: galaTypeVal,
-      personalCount: personalNames.length,
-      personalAttendees: personalNames.join(', '),
-      tableCount: (galaTypeVal === '認桌報名') ? document.getElementById('tableCount').value : 0,
-      tableName: (galaTypeVal === '認桌報名') ? document.getElementById('tableName').value : '',
-      tableAttendees: (galaTypeVal === '認桌報名') ? document.getElementById('tableAttendees').value : '',
-      totalAmount: calculatedAmount,
-      bankLast5: (selectedFlow === 'alumni') ? '' : document.getElementById('bankLast5').value,
-      note: document.getElementById('note').value
-    };
 
     fetch(GAS_WEB_APP_URL, {
       method: 'POST',
@@ -955,19 +1033,21 @@
     .then(data => {
       if (data.result === 'success') {
         // 如果報名成功且是認桌報名，順便清除快取，確保下次點開拿到最新資料
-        if (galaTypeVal === '認桌報名') {
+        if (formData.galaType === '認桌報名') {
           cachedTableData = null;
           preloadTableStatus();
         }
         renderCompletePage(formData);
       } else {
         alert("提交失敗：" + data.message);
+        isSubmitting = false;
         submitBtn.disabled = false;
         submitBtn.textContent = "確認送出報名";
       }
     })
     .catch(() => {
       alert("發送失敗，請檢查網路連線。");
+      isSubmitting = false;
       submitBtn.disabled = false;
       submitBtn.textContent = "確認送出報名";
     });
