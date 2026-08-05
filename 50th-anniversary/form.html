@@ -579,7 +579,10 @@
         <div id="table-fields" style="display: none;">
           <div class="form-group">
             <label for="tableCount" class="required">認桌桌數</label>
-            <input type="number" id="tableCount" min="1" value="1" onchange="calculateAmount()">
+			<p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0;">以一桌10人為單位認桌，若不滿一桌請個人報名或洽祕書處</p>
+            <input type="number" id="tableCount" min="1" step="1" inputmode="numeric" value="1"
+              oninput="this.value = this.value.replace(/[^0-9]/g, ''); calculateAmount();"
+              onblur="if (!this.value || parseInt(this.value, 10) < 1) this.value = 1; calculateAmount();">
           </div>
           <div class="form-group">
             <label for="tableName" class="required">認桌名稱</label>
@@ -1008,7 +1011,7 @@
         galaType: galaTypeVal,
         personalCount: personalNames.length,
         personalAttendees: personalNames.join(', '),
-        tableCount: (galaTypeVal === '認桌報名') ? document.getElementById('tableCount').value : 0,
+        tableCount: (galaTypeVal === '認桌報名') ? (parseInt(document.getElementById('tableCount').value, 10) || 1) : 0,
         tableName: (galaTypeVal === '認桌報名') ? document.getElementById('tableName').value : '',
         tableAttendees: (galaTypeVal === '認桌報名') ? document.getElementById('tableAttendees').value : '',
         totalAmount: calculatedAmount,
