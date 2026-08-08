@@ -687,6 +687,7 @@
 
 <script>
   const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw416mow0buXVRKw7mNpmcSvPMitUZK-sw9Jk8cHELATaj8pj15YtRewDOG7dMHpscjqA/exec";
+  const TABLES_JSON_URL = "https://api.github.com/repos/ivy2270/ymdd/contents/tables.json"; // 讀取 GitHub 自動產生的 JSON // 讀取 GitHub 自動產生的 JSON
 
   let selectedFlow = "";
   let calculatedAmount = 0;
@@ -708,22 +709,20 @@
     isFetchingTables = true;
 
     try {
-      const response = await fetch(GAS_WEB_APP_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "getTablesStatus" })
-      });
+      const response = await fetch(`${TABLES_JSON_URL}?t=${Date.now()}`);
+      if (!response.ok) throw new Error(`HTTP 錯誤：${response.status}`);
 
-      const result = await response.json();
-      if (result.result === "success") {
-        cachedTableData = result.tables; // 成功存入記憶體
-      }
+      const fileMeta = await response.json();
+      // Contents API 回傳的 content 是 base64，且可能含換行符號
+      const decoded = decodeURIComponent(escape(atob(fileMeta.content.replace(/\n/g, ''))));
+      const data = JSON.parse(decoded);
+      cachedTableData = Array.isArray(data) ? data : (data.tables || []);
     } catch (err) {
-      console.warn("背景預載認桌資料失敗，使用者點擊時會再手動嘗試：", err);
+      console.warn("讀取認桌資料失敗：", err);
     } finally {
       isFetchingTables = false;
     }
-  }
+}
 
   function initGradYearOptions() {
     const select = document.getElementById('gradYear');
@@ -929,9 +928,13 @@
   async function retryFetchTableModal() {
     cachedTableData = null;
     await preloadTableStatus();
-    loadAndShowTableModal();
+    if (cachedTableData) {
+      renderTableStatus(cachedTableData);
+    } else {
+      document.getElementById('tableStatusBody').innerHTML = 
+        '<tr><td colspan="2" style="color:red; text-align:center; padding:20px;">載入失敗，請確認網路或重新整理頁面。</td></tr>';
+    }
   }
-
   /**
    * 渲染認桌資料 (雙欄結構)
    */
