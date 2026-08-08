@@ -1,6 +1,6 @@
 {
   "result": "success",
-  "updatedAt": "2026-08-08T06:56:24.298Z",
+  "updatedAt": "2026-08-08T06:56:41.192Z",
   "tables": [
     {
       "gradYear": "第12屆",
@@ -9,6 +9,10 @@
     {
       "gradYear": "第12屆",
       "tableName": "12屆快樂桌"
+    },
+    {
+      "gradYear": "資料庫更新測試",
+      "tableName": 1345
     }
   ]
 }
