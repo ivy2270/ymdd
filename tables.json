@@ -1,6 +1,6 @@
 {
   "result": "success",
-  "updatedAt": "2026-09-01T05:27:26.275Z",
+  "updatedAt": "2026-09-01T05:42:25.400Z",
   "tables": [
     {
       "gradYear": "第3屆",
@@ -89,10 +89,6 @@
     {
       "gradYear": "不分屆",
       "tableName": "校友交流桌 B"
-    },
-    {
-      "gradYear": "不分屆",
-      "tableName": "校友交流桌 C"
     }
   ]
 }
