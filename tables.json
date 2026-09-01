@@ -1,6 +1,6 @@
 {
   "result": "success",
-  "updatedAt": "2026-09-01T03:57:25.981Z",
+  "updatedAt": "2026-09-01T04:12:25.826Z",
   "tables": [
     {
       "gradYear": "第12屆",
@@ -65,6 +65,10 @@
     {
       "gradYear": "第24屆",
       "tableName": "DD94在海峽會自己處理"
+    },
+    {
+      "gradYear": "第25屆",
+      "tableName": "第25屆"
     },
     {
       "gradYear": "第27屆",
