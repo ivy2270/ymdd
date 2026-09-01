@@ -1,6 +1,6 @@
 {
   "result": "success",
-  "updatedAt": "2026-09-01T03:42:26.322Z",
+  "updatedAt": "2026-09-01T03:49:57.195Z",
   "tables": [
     {
       "gradYear": "第12屆",
@@ -9,6 +9,74 @@
     {
       "gradYear": "第12屆",
       "tableName": "12屆快樂桌"
+    },
+    {
+      "gradYear": "第3屆",
+      "tableName": "第3屆(6720)"
+    },
+    {
+      "gradYear": "第4屆",
+      "tableName": "第4屆"
+    },
+    {
+      "gradYear": "第6屆",
+      "tableName": "第6屆"
+    },
+    {
+      "gradYear": "第7屆",
+      "tableName": "第7屆"
+    },
+    {
+      "gradYear": "第8屆",
+      "tableName": "第8屆"
+    },
+    {
+      "gradYear": "第10屆",
+      "tableName": "第10屆(牙80)"
+    },
+    {
+      "gradYear": "第11屆",
+      "tableName": "第11屆"
+    },
+    {
+      "gradYear": "第13屆",
+      "tableName": "第13屆"
+    },
+    {
+      "gradYear": "第14屆",
+      "tableName": "第14屆"
+    },
+    {
+      "gradYear": "第15屆",
+      "tableName": "第15屆"
+    },
+    {
+      "gradYear": "第19屆",
+      "tableName": "第19屆"
+    },
+    {
+      "gradYear": "第23屆",
+      "tableName": "第23屆"
+    },
+    {
+      "gradYear": "第24屆",
+      "tableName": "DD94去年畢業二十年"
+    },
+    {
+      "gradYear": "第24屆",
+      "tableName": "DD94在海峽會自己處理"
+    },
+    {
+      "gradYear": "第27屆",
+      "tableName": "第27屆"
+    },
+    {
+      "gradYear": "不分屆",
+      "tableName": "校友交流桌 A"
+    },
+    {
+      "gradYear": "不分屆",
+      "tableName": "校友交流桌 B"
     }
   ]
 }
