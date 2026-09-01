@@ -1,6 +1,6 @@
 {
   "result": "success",
-  "updatedAt": "2026-09-01T04:12:25.826Z",
+  "updatedAt": "2026-09-01T04:27:26.290Z",
   "tables": [
     {
       "gradYear": "第12屆",
@@ -73,6 +73,14 @@
     {
       "gradYear": "第27屆",
       "tableName": "第27屆"
+    },
+    {
+      "gradYear": "第44屆",
+      "tableName": "第44屆"
+    },
+    {
+      "gradYear": "第45屆",
+      "tableName": "第45屆"
     },
     {
       "gradYear": "不分屆",
