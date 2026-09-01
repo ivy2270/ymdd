@@ -1,15 +1,7 @@
 {
   "result": "success",
-  "updatedAt": "2026-09-01T04:57:26.364Z",
+  "updatedAt": "2026-09-01T05:09:07.259Z",
   "tables": [
-    {
-      "gradYear": "第12屆",
-      "tableName": "12屆開心桌"
-    },
-    {
-      "gradYear": "第12屆",
-      "tableName": "12屆快樂桌"
-    },
     {
       "gradYear": "第3屆",
       "tableName": "第3屆(6720)"
@@ -36,7 +28,15 @@
     },
     {
       "gradYear": "第11屆",
-      "tableName": "第11屆"
+      "tableName": "第11屆一期一會"
+    },
+    {
+      "gradYear": "第12屆",
+      "tableName": "12屆開心桌"
+    },
+    {
+      "gradYear": "第12屆",
+      "tableName": "12屆快樂桌"
     },
     {
       "gradYear": "第13屆",
