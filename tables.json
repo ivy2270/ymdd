@@ -1,6 +1,6 @@
 {
   "result": "success",
-  "updatedAt": "2026-09-03T02:57:25.862Z",
+  "updatedAt": "2026-09-03T03:12:31.802Z",
   "tables": [
     {
       "gradYear": "第3屆",
@@ -9,6 +9,10 @@
     {
       "gradYear": "第4屆",
       "tableName": "第4屆"
+    },
+    {
+      "gradYear": "第1.2.4屆",
+      "tableName": "第1.2.4屆"
     },
     {
       "gradYear": "第6屆",
@@ -28,15 +32,15 @@
     },
     {
       "gradYear": "第11屆",
-      "tableName": "第11屆一期一會"
+      "tableName": "第11屆(一期一會)"
     },
     {
       "gradYear": "第12屆",
-      "tableName": "12屆開心桌"
+      "tableName": "第12屆(開心桌)"
     },
     {
       "gradYear": "第12屆",
-      "tableName": "12屆快樂桌"
+      "tableName": "第12屆(快樂桌)"
     },
     {
       "gradYear": "第13屆",
@@ -60,11 +64,15 @@
     },
     {
       "gradYear": "第24屆",
-      "tableName": "DD94去年畢業二十年"
+      "tableName": "第24屆(DD94去年畢業二十年)"
     },
     {
       "gradYear": "第24屆",
-      "tableName": "DD94在海峽會自己處理"
+      "tableName": "第24屆(DD94在海峽會自己處理)"
+    },
+    {
+      "gradYear": "第21屆",
+      "tableName": "第21屆"
     },
     {
       "gradYear": "第25屆",
@@ -73,6 +81,10 @@
     {
       "gradYear": "第27屆",
       "tableName": "第27屆"
+    },
+    {
+      "gradYear": "第29.35屆",
+      "tableName": "第29.35屆"
     },
     {
       "gradYear": "第44屆",
