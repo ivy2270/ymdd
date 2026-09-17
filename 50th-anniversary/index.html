@@ -246,6 +246,70 @@
     color: var(--muted);
     padding: 30px 0;
   }
+
+  .slideshow {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 200;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .slide-layer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 1s ease, transform 1s ease;
+    will-change: opacity, transform;
+    z-index: 1;
+  }
+  .slide-layer.active { opacity: 1; z-index: 2; }
+  .slide-layer.effect-slide { transform: translateX(4%); }
+  .slide-layer.effect-slide.active { transform: translateX(0); }
+  .slide-layer.effect-zoom { transform: scale(1.12); }
+  .slide-layer.effect-zoom.active { transform: scale(1); }
+  .slide-photo-box {
+    width: 94vw;
+    height: 86vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .slide-photo-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .slideshow-tag {
+    position: absolute;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-size: 1.1rem;
+    letter-spacing: 0.1em;
+    background: rgba(0,0,0,0.45);
+    padding: 8px 22px;
+    border-radius: 20px;
+  }
+  .slideshow-exit {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    color: rgba(255,255,255,0.7);
+    font-size: 2rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    z-index: 2;
+  }
+  .slideshow-empty {
+    color: #fff;
+    text-align: center;
+  }
 </style>
 </head>
 <body>
@@ -341,6 +405,22 @@
       <span v-if="photos.length>1">{{ lightboxIndex+1 }} / {{ photos.length }}</span>
     </div>
   </div>
+
+  <div class="slideshow" v-if="slideshowActive" @click="exitSlideshow">
+    <button class="slideshow-exit" @click.stop="exitSlideshow">&times;</button>
+    <div v-if="slideshowLoading" class="slideshow-empty">載入中...</div>
+    <div v-else-if="slideshowPhotos.length===0" class="slideshow-empty">目前沒有照片可輪播</div>
+    <template v-else>
+      <div v-for="(layer, i) in slideLayers" :key="i"
+           class="slide-layer"
+           :class="[layer.effect, {active: layer.active}]">
+        <div class="slide-photo-box">
+          <img v-if="layer.url" :src="layer.url" :style="{transform: 'rotate(' + layer.rotation + 'deg)'}">
+        </div>
+      </div>
+      <div class="slideshow-tag">{{ slideshowTag }}</div>
+    </template>
+  </div>
 </div>
 
 <script>
@@ -368,7 +448,21 @@ createApp({
       uploading: false,
       uploadProgress: 0,
       uploadMsg: '',
-      uploadMsgType: ''
+      uploadMsgType: '',
+
+      slideshowActive: false,
+      slideshowLoading: false,
+      slideshowPhotos: [],
+      slideshowIndex: 0,
+      slideshowTag: '',
+      slideLayers: [
+        { url: '', rotation: 0, active: false, effect: 'effect-fade' },
+        { url: '', rotation: 0, active: false, effect: 'effect-fade' }
+      ],
+      slideActiveIdx: 0,
+      slideEffects: ['effect-fade', 'effect-slide', 'effect-zoom'],
+      slideEffectCounter: 0,
+      slideshowTimer: null
     };
   },
   computed: {
@@ -377,8 +471,17 @@ createApp({
     }
   },
   mounted() {
-    this.initApp();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('slideshow') === '1') {
+      this.startSlideshow();
+    } else {
+      this.initApp();
+    }
     window.addEventListener('keydown', (e) => {
+      if (this.slideshowActive) {
+        if (e.key === 'Escape') this.exitSlideshow();
+        return;
+      }
       if (this.lightboxIndex === null) return;
       if (e.key === 'ArrowLeft') this.prevPhoto();
       else if (e.key === 'ArrowRight') this.nextPhoto();
@@ -446,6 +549,81 @@ createApp({
           this.albumLoading = false;
         }
       }
+    },
+    bigImageUrl(url) {
+      // Google Drive 縮圖網址（=s800）換成較大尺寸，讓輪播畫面更飽滿
+      if (url && url.includes('googleusercontent.com')) {
+        return url.replace(/=s\d+/, '=s1920');
+      }
+      return url;
+    },
+    preloadImage(url) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+        img.src = url;
+      });
+    },
+    async startSlideshow() {
+      this.slideshowActive = true;
+      this.slideshowLoading = true;
+      try {
+        const res = await fetch(`${GAS_URL}?action=getAllPhotos`);
+        const data = await res.json();
+        this.slideshowPhotos = (data.success && data.photos) ? data.photos : [];
+      } catch (err) {
+        this.slideshowPhotos = [];
+      }
+      this.slideshowLoading = false;
+      if (this.slideshowPhotos.length > 0) {
+        this.slideshowIndex = 0;
+        const first = this.slideshowPhotos[0];
+        const url = this.bigImageUrl(first.thumbnailUrl);
+        await this.preloadImage(url);
+        this.slideLayers[0] = { url, rotation: first.rotation, active: true, effect: 'effect-fade' };
+        this.slideActiveIdx = 0;
+        this.slideshowTag = first.year;
+        this.slideshowTimer = setInterval(this.advanceSlideshow, 5000);
+      }
+    },
+    async advanceSlideshow() {
+      if (this.slideshowPhotos.length < 2) return;
+      const nextIndex = (this.slideshowIndex + 1) % this.slideshowPhotos.length;
+      const nextPhoto = this.slideshowPhotos[nextIndex];
+      const nextUrl = this.bigImageUrl(nextPhoto.thumbnailUrl);
+      await this.preloadImage(nextUrl);
+      // 若輪播在等待圖片載入期間被關閉，就不要再繼續切換
+      if (!this.slideshowActive) return;
+
+      const inactiveIdx = this.slideActiveIdx === 0 ? 1 : 0;
+      const effect = this.slideEffects[this.slideEffectCounter % this.slideEffects.length];
+      this.slideEffectCounter++;
+
+      // 先把下一張圖放進未啟用的圖層（此時還是 idle 狀態，畫面不會變）
+      this.slideLayers[inactiveIdx] = { url: nextUrl, rotation: nextPhoto.rotation, active: false, effect };
+      this.slideLayers[this.slideActiveIdx].effect = effect;
+
+      await this.$nextTick();
+      requestAnimationFrame(() => {
+        this.slideLayers[inactiveIdx].active = true;
+        this.slideLayers[this.slideActiveIdx].active = false;
+        this.slideActiveIdx = inactiveIdx;
+        this.slideshowIndex = nextIndex;
+        this.slideshowTag = nextPhoto.year;
+      });
+    },
+    exitSlideshow() {
+      this.slideshowActive = false;
+      if (this.slideshowTimer) {
+        clearInterval(this.slideshowTimer);
+        this.slideshowTimer = null;
+      }
+      this.slideLayers = [
+        { url: '', rotation: 0, active: false, effect: 'effect-fade' },
+        { url: '', rotation: 0, active: false, effect: 'effect-fade' }
+      ];
+      if (!this.folders.length) this.initApp();
     },
     onImgError(p) {
       if (p.thumbnailUrl && p.thumbnailUrl.includes('lh3.googleusercontent.com')) {
