@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://font.emtech.cc/css/ChironSungHK" rel="stylesheet" />
+<title>捐款進度即時看板</title>
+<style>
+  :root{
+    --deep-blue:#081e51;
+    --purple:#805c99;
+    --light-blue-purple:#9393b9;
+    --beige:#e4d4bd;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:"ChironSungHK", "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;
+    background:radial-gradient(circle at 50% 0%, #12296b 0%, var(--deep-blue) 60%);
+    color:var(--beige);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:40px 20px;
+  }
+  html{
+    scrollbar-color: var(--purple) rgba(147,147,185,0.15);
+    scrollbar-width: thin;
+  }
+  .banner-wrap{
+    width:100%;
+    max-width:480px;
+    margin:0 auto 20px;
+  }
+  .banner-wrap img{
+    width:100%;
+    height:auto;
+    aspect-ratio:1200/600;
+    object-fit:cover;
+    border-radius:12px;
+    display:block;
+    border:1px solid rgba(147,147,185,0.4);
+  }
+  @media (max-width:600px){
+    .banner-wrap{
+      max-width:100%;
+      margin-bottom:14px;
+    }
+    .banner-wrap img{
+      aspect-ratio:1200/600;
+      border-radius:8px;
+    }
+    h1{font-size:1.5rem !important;margin-bottom:16px !important;}
+  }
+  h1{
+    font-size:2.4rem;
+    letter-spacing:4px;
+    color:var(--beige);
+    text-shadow:0 0 20px rgba(128,92,153,0.6);
+    margin-bottom:30px;
+    text-align:center;
+  }
+  .total-wrap{
+    text-align:center;
+    margin-bottom:10px;
+  }
+  .total-label{
+    font-size:1.1rem;
+    color:var(--light-blue-purple);
+    letter-spacing:2px;
+  }
+  .total-amount{
+    font-size:4rem;
+    font-weight:bold;
+    color:var(--beige);
+    text-shadow:0 0 30px rgba(228,212,189,0.5);
+  }
+  .goal-label{
+    font-size:1rem;
+    color:var(--light-blue-purple);
+    margin-bottom:20px;
+  }
+  .progress-outer{
+    width:100%;
+    max-width:900px;
+    height:44px;
+    background:rgba(147,147,185,0.25);
+    border:2px solid var(--light-blue-purple);
+    border-radius:22px;
+    overflow:hidden;
+    position:relative;
+    margin-bottom:8px;
+  }
+  .progress-inner{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, var(--purple), var(--beige));
+    border-radius:22px;
+    transition:width 1.2s ease-out;
+    box-shadow:0 0 20px rgba(128,92,153,0.8);
+  }
+  .progress-pct{
+    text-align:right;
+    width:100%;
+    max-width:900px;
+    color:var(--light-blue-purple);
+    font-size:0.95rem;
+    margin-bottom:40px;
+  }
+  .list-wrap{
+    width:100%;
+    max-width:900px;
+    background:rgba(128,92,153,0.12);
+    border:1px solid rgba(147,147,185,0.4);
+    border-radius:16px;
+    padding:10px;
+    max-height:55vh;
+    overflow-y:auto;
+    scrollbar-color: var(--purple) rgba(147,147,185,0.15);
+    scrollbar-width: thin;
+  }
+  .list-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    width:100%;
+    max-width:900px;
+    margin-bottom:10px;
+  }
+  .list-title{
+    color:var(--light-blue-purple);
+    font-size:1rem;
+    letter-spacing:1px;
+  }
+  .sort-btn{
+    background:none;
+    border:none;
+    color:rgba(147,147,185,0.6);
+    font-size:0.75rem;
+    padding:6px 10px;
+    margin-top:14px;
+    cursor:pointer;
+    letter-spacing:1px;
+    text-decoration:underline;
+    transition:color 0.2s;
+  }
+  .sort-btn:hover{color:var(--light-blue-purple);}
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(8,30,81,0.75);
+    backdrop-filter:blur(2px);
+    z-index:100;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-box{
+    background:var(--deep-blue);
+    border:1px solid var(--light-blue-purple);
+    border-radius:16px;
+    width:100%;
+    max-width:600px;
+    max-height:80vh;
+    display:flex;
+    flex-direction:column;
+    box-shadow:0 0 40px rgba(128,92,153,0.5);
+  }
+  .modal-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:16px 20px;
+    border-bottom:1px solid rgba(147,147,185,0.3);
+    color:var(--beige);
+    font-size:1.1rem;
+    letter-spacing:1px;
+  }
+  .modal-close{
+    background:none;
+    border:none;
+    color:var(--light-blue-purple);
+    font-size:1.3rem;
+    cursor:pointer;
+    line-height:1;
+  }
+  .modal-list{
+    overflow-y:auto;
+    padding:6px 10px;
+    scrollbar-color: var(--purple) rgba(147,147,185,0.15);
+    scrollbar-width: thin;
+  }
+  .modal-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 14px;
+    border-bottom:1px solid rgba(147,147,185,0.15);
+    font-size:1.05rem;
+  }
+  .modal-rank{
+    color:var(--light-blue-purple);
+    width:32px;
+    display:inline-block;
+    font-weight:bold;
+  }
+  .donation-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px 20px;
+    border-bottom:1px solid rgba(147,147,185,0.2);
+    font-size:1.2rem;
+    animation:slideIn 0.5s ease-out;
+  }
+  .donation-row:last-child{border-bottom:none;}
+  .donation-name{color:var(--beige);font-weight:600;letter-spacing:1px;}
+  .donation-amount{color:var(--light-blue-purple);font-weight:bold;}
+  .donation-row.new .donation-amount{color:var(--beige);}
+  @keyframes slideIn{
+    from{opacity:0; transform:translateY(-12px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+  .empty{
+    text-align:center;
+    color:var(--light-blue-purple);
+    padding:30px;
+  }
+  .status{
+    margin-top:20px;
+    font-size:0.8rem;
+    color:rgba(147,147,185,0.6);
+  }
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-track{background:rgba(147,147,185,0.15);border-radius:4px;}
+  ::-webkit-scrollbar-thumb{background:var(--purple);border-radius:4px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--light-blue-purple);}
+</style>
+</head>
+<body>
+
+  <!-- Banner：將下方 src 換成你的圖片（建議尺寸 1200x600，或依比例縮放） -->
+  <div class="banner-wrap">
+    <img id="bannerImg" src="https://ymdd-image-tw.s3.ap-east-2.amazonaws.com/wp-content/uploads/2026/09/50-banner-desktop.jpg" alt="banner"
+      onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%221200%22 height=%22600%22><rect width=%221200%22 height=%22600%22 fill=%22%23805c99%22/><text x=%2250%25%22 y=%2250%25%22 fill=%22%23e4d4bd%22 font-size=%2260%22 font-family=%22sans-serif%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>請替換 banner 圖片</text></svg>'">
+  </div>
+
+  <h1>捐款進度即時看板</h1>
+
+  <div class="total-wrap">
+    <div class="total-label">目前累計捐款金額</div>
+    <div class="total-amount" id="totalAmount">NT$ 0</div>
+    <div class="goal-label" id="goalLabel">目標 NT$ 15,000,000</div>
+  </div>
+
+  <div class="progress-outer">
+    <div class="progress-inner" id="progressBar"></div>
+  </div>
+  <div class="progress-pct" id="progressPct">0%</div>
+
+  <div class="list-header">
+    <span class="list-title">最新捐款</span>
+  </div>
+
+  <div class="list-wrap" id="listWrap">
+    <div class="empty">尚無捐款資料</div>
+  </div>
+
+  <div class="status" id="statusLine">更新中...</div>
+
+  <button class="sort-btn" id="sortBtn">金額排行榜</button>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span>捐款排行榜（金額由大到小）</span>
+        <button class="modal-close" id="closeModalBtn">✕</button>
+      </div>
+      <div class="modal-list" id="modalList"></div>
+    </div>
+  </div>
+
+<script>
+  // ==== 設定區：請填入 Apps Script 部署後的網頁應用程式網址 ====
+  const API_URL = "https://script.google.com/macros/s/AKfycbyo9xDjJzFOaO-GVnFQseOghHGIJfMuu6qqmvTNREXg9RDzO5XYVbzO1e3Tsje8yDWy/exec";
+  const POLL_INTERVAL_MS = 8000; // 輪詢間隔（毫秒）
+  // ============================================================
+
+  const GOAL_FALLBACK = 15000000;
+  const FETCH_TIMEOUT_MS = 10000; // 單次請求逾時秒數，避免卡住
+  let currentTotal = 0;
+  let knownCount = 0;
+  let lastDonations = [];
+  let isFetching = false;
+
+  function formatMoney(n){
+    return "NT$ " + Math.round(n).toLocaleString("zh-Hant-TW");
+  }
+
+  function animateTotal(from, to){
+    const dur = 1200;
+    const start = performance.now();
+    function step(now){
+      const p = Math.min((now - start) / dur, 1);
+      const val = from + (to - from) * p;
+      document.getElementById("totalAmount").textContent = formatMoney(val);
+      if(p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function render(data){
+    const goal = data.goal || GOAL_FALLBACK;
+    const total = data.total || 0;
+    const donations = data.donations || [];
+
+    document.getElementById("goalLabel").textContent =
+      "目標 " + formatMoney(goal);
+
+    animateTotal(currentTotal, total);
+    currentTotal = total;
+
+    const pct = Math.min((total / goal) * 100, 100);
+    document.getElementById("progressBar").style.width = pct.toFixed(1) + "%";
+    document.getElementById("progressPct").textContent = pct.toFixed(1) + "%";
+
+    const listWrap = document.getElementById("listWrap");
+    if(donations.length === 0){
+      listWrap.innerHTML = '<div class="empty">尚無捐款資料</div>';
+    } else {
+      listWrap.innerHTML = donations.map((d, i) => {
+        const isNew = i < (donations.length - knownCount);
+        return `<div class="donation-row${isNew ? ' new' : ''}">
+          <span class="donation-name">${escapeHtml(d.name)}</span>
+          <span class="donation-amount">${formatMoney(d.amount)}</span>
+        </div>`;
+      }).join("");
+    }
+    knownCount = donations.length;
+    lastDonations = donations;
+
+    document.getElementById("statusLine").textContent =
+      "最後更新：" + new Date().toLocaleTimeString("zh-Hant-TW");
+  }
+
+  function openLeaderboard(){
+    const sorted = [...lastDonations].sort((a, b) => b.amount - a.amount);
+    const modalList = document.getElementById("modalList");
+    if(sorted.length === 0){
+      modalList.innerHTML = '<div class="empty">尚無捐款資料</div>';
+    } else {
+      modalList.innerHTML = sorted.map((d) => `
+        <div class="modal-row">
+          <span>${escapeHtml(d.name)}</span>
+          <span class="donation-amount">${formatMoney(d.amount)}</span>
+        </div>`).join("");
+    }
+    document.getElementById("modalOverlay").classList.add("open");
+  }
+
+  function closeLeaderboard(){
+    document.getElementById("modalOverlay").classList.remove("open");
+  }
+
+  document.getElementById("sortBtn").addEventListener("click", openLeaderboard);
+  document.getElementById("closeModalBtn").addEventListener("click", closeLeaderboard);
+  document.getElementById("modalOverlay").addEventListener("click", function(e){
+    if(e.target === this) closeLeaderboard();
+  });
+
+  function escapeHtml(str){
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  async function fetchData(){
+    if(isFetching) return; // 避免前一次請求還沒結束就重疊發送
+    isFetching = true;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+    try{
+      const res = await fetch(API_URL + "?t=" + Date.now(), { signal: controller.signal });
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      render(data);
+    }catch(err){
+      const msg = err.name === "AbortError" ? "連線逾時，重試中..." : "更新失敗，重試中...";
+      document.getElementById("statusLine").textContent = msg;
+      console.error(err);
+    }finally{
+      clearTimeout(timeoutId);
+      isFetching = false;
+    }
+  }
+
+  function scheduleNext(){
+    setTimeout(async () => {
+      await fetchData();
+      scheduleNext();
+    }, POLL_INTERVAL_MS);
+  }
+
+  // 分頁重新回到前景時（例如螢幕喚醒、切回視窗），立即補一次更新
+  document.addEventListener("visibilitychange", function(){
+    if(!document.hidden) fetchData();
+  });
+
+  fetchData();
+  scheduleNext();
+</script>
+
+</body>
+</html>
